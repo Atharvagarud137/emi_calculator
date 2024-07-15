@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>EMI Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error {
+            color: red;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-center items-center bg-gray-100 text-gray-900">
+
+    <!-- Hero Section -->
+    <section class="w-full py-12 bg-blue-600 text-white text-center">
+        <h1 class="text-5xl font-bold">EMI Calculator</h1>
+        <p class="mt-4 text-lg">Easily calculate your equated monthly installments (EMI) for various loans. Understand your payments and interest over time.</p>
+    </section>
+
+    <div class="w-full max-w-md px-4 sm:px-0 mt-10">
+        <form id="emiForm" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" method="post" action="/">
+            {% if error_message %}
+                <p class="error text-center mb-4">{{ error_message }}</p>
+            {% endif %}
+            <div class="mb-4">
+                <label for="loan_amount" class="block text-sm font-bold mb-2">Home Loan Amount:</label>
+                <div class="flex items-center">
+                    <input id="loan_amount" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" name="loan_amount" min="100" max="1000000000" step="100" required>
+                    <span class="ml-2">₹</span>
+                </div>
+                <p id="loan_amount_error" class="error hidden">Please enter a valid amount between 100 and 1,000,000,000.</p>
+            </div>
+            <div class="mb-4">
+                <label for="interest_rate" class="block text-sm font-bold mb-2">Annual Interest Rate (%):</label>
+                <div class="flex items-center">
+                    <input id="interest_rate" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" step="0.01" name="interest_rate" min="2" max="20" required>
+                    <span class="ml-2">%</span>
+                </div>
+                <p id="interest_rate_error" class="error hidden">Please enter a valid rate between 2% and 20%.</p>
+            </div>
+
+            <!-- Loan Tenure: Selection -->
+            <div class="mb-4">
+                <label class="block text-sm font-bold mb-2">Select Loan Tenure:</label>
+                <div class="flex items-center">
+                    <input type="radio" id="tenure_years_radio" name="tenure_unit" value="years" onclick="showTenureInput('years')" checked>
+                    <label for="tenure_years_radio" class="ml-2">Years</label>
+                    <input type="radio" id="tenure_months_radio" name="tenure_unit" value="months" class="ml-4" onclick="showTenureInput('months')">
+                    <label for="tenure_months_radio" class="ml-2">Months</label>
+                </div>
+            </div>
+
+            <!-- Loan Tenure: Years -->
+            <div class="mb-4" id="tenure_years_container">
+                <label for="tenure_years" class="block text-sm font-bold mb-2">Loan Tenure (Years):</label>
+                <div class="flex items-center">
+                    <input id="tenure_years" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" name="tenure_years" min="1" step="1">
+                </div>
+                <p id="tenure_years_error" class="error hidden">Please enter a valid tenure in years.</p>
+            </div>
+
+            <!-- Loan Tenure: Months -->
+            <div class="mb-4 hidden" id="tenure_months_container">
+                <label for="tenure_months" class="block text-sm font-bold mb-2">Loan Tenure (Months):</label>
+                <div class="flex items-center">
+                    <input id="tenure_months" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" type="number" name="tenure_months" min="1" step="1">
+                </div>
+                <p id="tenure_months_error" class="error hidden">Please enter a valid tenure in months.</p>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" type="submit">
+                    Calculate EMI
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function showTenureInput(unit) {
+            const yearsContainer = document.getElementById('tenure_years_container');
+            const monthsContainer = document.getElementById('tenure_months_container');
+            if (unit === 'years') {
+                yearsContainer.classList.remove('hidden');
+                monthsContainer.classList.add('hidden');
+            } else {
+                yearsContainer.classList.add('hidden');
+                monthsContainer.classList.remove('hidden');
+            }
+        }
+
+        // Initialize with years input
+        showTenureInput('years');
+
+        document.getElementById('emiForm').addEventListener('submit', function(event) {
+            let valid = true;
+
+            // Validate Loan Amount
+            const loanAmount = document.getElementById('loan_amount').value;
+            const loanAmountError = document.getElementById('loan_amount_error');
+            if (!loanAmount || isNaN(loanAmount) || loanAmount < 100 || loanAmount > 1000000000) {
+                loanAmountError.classList.remove('hidden');
+                valid = false;
+            } else {
+                loanAmountError.classList.add('hidden');
+            }
+
+            // Validate Interest Rate
+            const interestRate = document.getElementById('interest_rate').value;
+            const interestRateError = document.getElementById('interest_rate_error');
+            if (!interestRate || isNaN(interestRate) || interestRate < 2 || interestRate > 20) {
+                interestRateError.classList.remove('hidden');
+                valid = false;
+            } else {
+                interestRateError.classList.add('hidden');
+            }
+
+            // Validate Tenure
+            const tenureYears = document.getElementById('tenure_years').value;
+            const tenureMonths = document.getElementById('tenure_months').value;
+            const tenureYearsError = document.getElementById('tenure_years_error');
+            const tenureMonthsError = document.getElementById('tenure_months_error');
+            if (document.getElementById('tenure_years_radio').checked && (!tenureYears || isNaN(tenureYears) || tenureYears <= 0)) {
+                tenureYearsError.classList.remove('hidden');
+                valid = false;
+            } else {
+                tenureYearsError.classList.add('hidden');
+            }
+            if (document.getElementById('tenure_months_radio').checked && (!tenureMonths || isNaN(tenureMonths) || tenureMonths <= 0)) {
+                tenureMonthsError.classList.remove('hidden');
+                valid = false;
+            } else {
+                tenureMonthsError.classList.add('hidden');
+            }
+
+            if (!valid) {
+                event.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>
